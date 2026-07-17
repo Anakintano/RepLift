@@ -8,6 +8,9 @@ This document is the **codified decision record** the frontend implements.
 - **Style:** Clean modern SaaS with *selective* glassmorphism (nav bar, modals, hero cards get `backdrop-blur` + translucent surfaces; dense data UI stays flat and crisp).
 - **Mode:** **Light-first with full dark mode** (class-based `.dark`, toggle via `next-themes`). The skill flagged "dark mode by default" as an anti-pattern for this product type; the black/white logo works on both.
 - **Landing pattern:** Minimal single-column — hero headline, short description, 3 benefit bullets, one large CTA, footer.
+  The landing page only may use scroll-triggered reveals/parallax (Framer Motion) and curated
+  photography for the hero — see `brand.md` exception; all other screens keep mount-only
+  entrance animation.
 - **Density:** Standard (6/10) — spacious marketing pages, denser diary/dashboard views.
 - **Motion:** Subtle (150–300 ms), stagger-on-load for card grids, `prefers-reduced-motion` respected. No overshoot easing on data tables.
 

@@ -26,7 +26,16 @@ Rules: sentence case everywhere (no Title Case buttons) · numbers always tabula
 - **Palette:** Energy Orange `#F97316` (action/brand) · Success Green `#22C55E` (goals met) · slate neutrals · macro colors fixed: protein blue / carbs amber / fat violet / water sky.
 - **Type:** Plus Jakarta Sans (300–800). Headings tracking-tight; metrics `tabular-nums`.
 - **Imagery/motifs:** ring gauges, macro bars, sync states — the product IS the imagery. No stock gym photos.
+  *Exception — marketing landing page only (`/`, i.e. `frontend/src/app/page.tsx`):* curated
+  strength-training photography (deadlifts, barbell loading, chalk hands) is permitted for
+  hero/editorial impact, always dark-toned or duotone-treated to match the navy/orange palette.
+  This exception does not extend to `/login`, `/signup`, `/dashboard`, or any authenticated/
+  in-app screen — those remain photo-free.
 - **Motion:** 150–300 ms, ease-out, purposeful (entrance, state change). Never decorative loops.
+  *Exception — marketing landing page only:* scroll-triggered reveals and a small-range
+  (20–40px) scroll-linked parallax on the hero image are permitted for editorial richness;
+  still no infinite/ambient decorative loops, no custom cursor, no pinned scroll choreography.
+  `prefers-reduced-motion` must still disable all of it.
 
 ## Naming conventions
 

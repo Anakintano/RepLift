@@ -7,9 +7,18 @@
 
 import Link from "next/link";
 import { ArrowRight, CloudOff, Search, ChartNoAxesCombined, Check, Flame } from "lucide-react";
+import { motion, MotionConfig } from "motion/react";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/lib/hooks/use-auth";
+import { HeroImage } from "@/components/marketing/hero-image";
+
+const REVEAL = {
+  initial: { opacity: 0, y: 14 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: "-80px" },
+} as const;
+const EASE = [0.16, 1, 0.3, 1] as const;
 
 const BENEFITS = [
   {
@@ -54,6 +63,7 @@ export default function LandingPage() {
   const appHref = user ? "/dashboard" : "/signup";
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="min-h-dvh flex flex-col">
       {/* Nav */}
       <header className="glass sticky top-0 z-40">
@@ -82,26 +92,29 @@ export default function LandingPage() {
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="px-4 md:px-6 pt-20 pb-16 text-center bg-gradient-to-b from-background via-background to-muted/60">
+        <section className="relative px-4 md:px-6 pt-24 pb-20 text-center overflow-hidden">
+          <HeroImage />
           <div className="max-w-2xl mx-auto">
-            <p className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground mb-6">
+            <p className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 backdrop-blur px-3 py-1 text-xs font-semibold text-white/80 mb-6">
               <Flame className="size-3.5 text-primary" aria-hidden /> Nutrition tracking, engineered properly
             </p>
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-[1.1] mb-5 text-balance">
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-[1.1] mb-5 text-balance text-white">
               Eat with intent.
               <br />
               <span className="text-primary">Lift</span> your limits.
             </h1>
-            <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+            <p className="text-lg text-white/75 mb-8 max-w-xl mx-auto">
               RepLift tracks your food, workouts, and progress with an offline-first engine that never loses a log —
               and search smart enough to keep up with real life.
             </p>
-            <Button size="lg" className="h-12 px-8 text-base" asChild>
-              <Link href={appHref}>
-                Start tracking free <ArrowRight className="size-4.5" aria-hidden />
-              </Link>
-            </Button>
-            <p className="text-xs text-muted-foreground mt-3">No credit card. Your data stays yours.</p>
+            <motion.div className="inline-block" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.15, ease: "easeOut" }}>
+              <Button size="lg" className="h-12 px-8 text-base" asChild>
+                <Link href={appHref}>
+                  Start tracking free <ArrowRight className="size-4.5" aria-hidden />
+                </Link>
+              </Button>
+            </motion.div>
+            <p className="text-xs text-white/60 mt-3">No credit card. Your data stays yours.</p>
           </div>
         </section>
 
@@ -109,20 +122,25 @@ export default function LandingPage() {
         <section className="px-4 md:px-6 py-16" aria-label="Why RepLift">
           <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-6">
             {BENEFITS.map(({ icon: Icon, title, body }, i) => (
-              <div key={title} className="rise-in card-hover rounded-2xl border bg-card p-6" style={{ animationDelay: `${i * 90}ms` }}>
+              <motion.div
+                key={title}
+                {...REVEAL}
+                transition={{ duration: 0.36, delay: i * 0.09, ease: EASE }}
+                className="card-hover rounded-2xl border bg-card p-6"
+              >
                 <div className="size-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                   <Icon className="size-5.5 text-primary" aria-hidden />
                 </div>
                 <h2 className="font-bold text-lg mb-2">{title}</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">{body}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </section>
 
         {/* Product peek */}
         <section className="px-4 md:px-6 pb-16" aria-label="Product preview">
-          <div className="max-w-4xl mx-auto rounded-3xl border bg-gradient-to-br from-slate-950 to-slate-900 p-8 md:p-12 text-center overflow-hidden">
+          <div className="max-w-4xl mx-auto rounded-3xl border bg-gradient-to-br from-slate-950 to-slate-900 p-8 md:p-12 text-center overflow-hidden grain-overlay">
             <div className="max-w-md mx-auto rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 text-left">
               <div className="flex items-center justify-between mb-4">
                 <p className="text-white/90 font-semibold text-sm">Today</p>
@@ -176,9 +194,11 @@ export default function LandingPage() {
             <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-center mb-3">Simple pricing</h2>
             <p className="text-muted-foreground text-center mb-10">Free is genuinely useful. Pro is for the obsessed.</p>
             <div className="grid md:grid-cols-2 gap-5">
-              {PRICING.map((tier) => (
-                <div
+              {PRICING.map((tier, i) => (
+                <motion.div
                   key={tier.name}
+                  {...REVEAL}
+                  transition={{ duration: 0.36, delay: i * 0.09, ease: EASE }}
                   className={
                     tier.highlighted
                       ? "card-hover rounded-2xl border-2 border-primary bg-card p-6 relative shadow-lg shadow-primary/10"
@@ -207,7 +227,7 @@ export default function LandingPage() {
                   <Button className="w-full" variant={tier.highlighted ? "default" : "outline"} asChild>
                     <Link href={appHref}>{tier.cta}</Link>
                   </Button>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
@@ -228,5 +248,6 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
+    </MotionConfig>
   );
 }
