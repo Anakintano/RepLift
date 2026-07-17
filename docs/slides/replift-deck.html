@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RepLift — Engineering Deep Dive</title>
+<style>
+  :root{
+    --bg:#0b1120; --surface:#111827; --card:#1e293b; --border:#293548;
+    --fg:#f8fafc; --muted:#94a3b8; --primary:#fb923c; --primary-deep:#f97316;
+    --success:#4ade80; --blue:#60a5fa; --amber:#fbbf24; --violet:#a78bfa; --sky:#38bdf8;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--fg);font-family:'Segoe UI',system-ui,sans-serif;overflow:hidden}
+  .deck{height:100vh;position:relative}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;padding:7vh 8vw;gap:3vh}
+  .slide.active{display:flex;animation:in .35s cubic-bezier(.16,1,.3,1)}
+  @keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1}}
+  @media (prefers-reduced-motion: reduce){.slide.active{animation:none}}
+  h1{font-size:clamp(2.2rem,5.5vw,4.2rem);font-weight:800;letter-spacing:-.02em;line-height:1.08}
+  h2{font-size:clamp(1.6rem,3.4vw,2.6rem);font-weight:800;letter-spacing:-.01em}
+  .accent{color:var(--primary)}
+  .muted{color:var(--muted)}
+  .kicker{color:var(--primary);font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:.85rem}
+  .grid{display:grid;gap:1.2rem}
+  .cols-2{grid-template-columns:1fr 1fr}
+  .cols-3{grid-template-columns:repeat(3,1fr)}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.4rem}
+  .card h3{font-size:1.05rem;margin-bottom:.5rem;color:var(--fg)}
+  .card p, .card li{color:var(--muted);font-size:.95rem;line-height:1.55}
+  .card ul{padding-left:1.1rem}
+  .num{font-size:2.6rem;font-weight:800;font-variant-numeric:tabular-nums;color:var(--primary)}
+  code{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:.1em .45em;font-size:.88em;color:#fdba74}
+  .flow{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;font-size:.95rem}
+  .flow .step{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.7rem 1rem;color:var(--fg)}
+  .flow .arrow{color:var(--primary);font-weight:800}
+  .footer{position:fixed;bottom:1.2rem;left:0;right:0;display:flex;justify-content:space-between;padding:0 2rem;color:var(--muted);font-size:.8rem}
+  .dots{display:flex;gap:.4rem}
+  .dot{width:8px;height:8px;border-radius:99px;background:var(--border);cursor:pointer}
+  .dot.on{background:var(--primary)}
+  .bars{display:flex;flex-direction:column;gap:.9rem;margin-top:.6rem}
+  .bar-row{display:grid;grid-template-columns:110px 1fr 90px;gap:.8rem;align-items:center;font-size:.9rem;color:var(--muted)}
+  .track{height:10px;border-radius:99px;background:var(--card);overflow:hidden}
+  .fill{height:100%;border-radius:99px}
+  kbd{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:.05em .5em;font-size:.85em}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <section class="slide active">
+    <div class="kicker">Portfolio engineering deep-dive</div>
+    <h1>Rep<span class="accent">Lift</span></h1>
+    <h1 style="font-size:clamp(1.6rem,3.6vw,2.8rem)">Eat with intent. <span class="accent">Lift your limits.</span></h1>
+    <p class="muted" style="font-size:1.15rem;max-width:46ch">A production-grade nutrition &amp; fitness SaaS built to demonstrate the engineering underneath: offline-first sync, explainable search, and calculation correctness.</p>
+    <div class="flow">
+      <span class="step">Next.js 16 + TypeScript</span><span class="step">FastAPI + SQLAlchemy 2</span><span class="step">PostgreSQL 16</span><span class="step">Redis + ARQ</span><span class="step">Groq LLM</span>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">The problem worth solving</div>
+    <h2>Health data has a trust problem</h2>
+    <div class="grid cols-3">
+      <div class="card"><h3>🏋 Logs vanish</h3><p>Gyms have dead zones. Most trackers drop entries or duplicate them on flaky networks. Users stop trusting the app, then stop logging.</p></div>
+      <div class="card"><h3>🔍 Search fights you</h3><p>"chiken brest" returns nothing; your daily oatmeal is 6 taps deep. Friction kills the logging habit that drives every outcome.</p></div>
+      <div class="card"><h3>🧮 Numbers wobble</h3><p>Same meal, different totals across screens — rounding scattered through UI code. Correctness must live in one tested engine.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Architecture</div>
+    <h2>Offline-first, one source of truth per concern</h2>
+    <div class="flow" style="margin:1rem 0">
+      <span class="step">UI (Next.js)</span><span class="arrow">→</span>
+      <span class="step">IndexedDB<br><small class="muted">entries + outbox</small></span><span class="arrow">→</span>
+      <span class="step">Sync API<br><small class="muted">idempotency keys</small></span><span class="arrow">→</span>
+      <span class="step">PostgreSQL<br><small class="muted">revisions, FTS</small></span>
+      <span class="arrow">⇄</span><span class="step">ARQ worker<br><small class="muted">jobs, retries</small></span>
+    </div>
+    <div class="grid cols-2">
+      <div class="card"><h3>Writes are queued mutations</h3><p>Every diary write lands locally first (instant UI), then drains through <code>POST /sync/push</code> with a stable idempotency key. Retries, double-submits, and replay after crash are all no-ops by construction.</p></div>
+      <div class="card"><h3>Conflicts are surfaced, never merged silently</h3><p>Per-entry revisions detect concurrent edits from other devices. The server returns its copy; the user picks a winner in a side-by-side dialog.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Deep dive 1 · Sync engine</div>
+    <h2>The same request twice = one record. Proven.</h2>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Idempotency gate (Postgres)</h3>
+        <p><code>INSERT … ON CONFLICT DO NOTHING</code> on the key table decides atomically whether a mutation is new. Replays return the stored result as <code>duplicate</code>. Same client entry-id with a lost key? Still one row.</p>
+      </div>
+      <div class="card">
+        <h3>Optimistic concurrency</h3>
+        <p>Updates carry <code>baseRevision</code>. Stale writes get <code>conflict</code> + the server copy. Deletes are tombstones so every device converges. All paths covered by 19 API tests.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Deep dive 2 · Food search</div>
+    <h2>Explainable ranking, not a black box</h2>
+    <div class="card" style="max-width:640px">
+      <p style="font-size:1.05rem;color:var(--fg)"><code>score = textScore + popularityBoost + personalBoost</code></p>
+      <div class="bars">
+        <div class="bar-row"><span>FTS + trigram</span><div class="track"><div class="fill" style="width:62%;background:var(--primary-deep)"></div></div><span>text 26.5</span></div>
+        <div class="bar-row"><span>popularity</span><div class="track"><div class="fill" style="width:37%;background:var(--amber)"></div></div><span>+15.8</span></div>
+        <div class="bar-row"><span>your history</span><div class="track"><div class="fill" style="width:58%;background:var(--blue)"></div></div><span>+25.0</span></div>
+      </div>
+      <p style="margin-top:.9rem">"chiken brest" → <b style="color:var(--fg)">Chicken breast</b> ranked #1 via pg_trgm fuzzy match; every result ships its score breakdown, so ranking changes are measurable.</p>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Deep dive 3 · Correctness &amp; jobs</div>
+    <h2>One nutrition engine, two languages, same vectors</h2>
+    <div class="grid cols-2">
+      <div class="card"><h3>Deterministic math</h3><p>TS and Python implementations run identical test vectors (2 eggs = 155 kcal; meal-prep recipe = 536 kcal/serving; half-up rounding incl. the <code>2.675</code> float trap). Rounding happens only at persistence boundaries.</p></div>
+      <div class="card"><h3>Observable background jobs</h3><p>ARQ on Redis: exports, account purge, weekly reports, popularity refresh — with exponential-backoff retries and a <code>job_runs</code> history table where the final failure is the dead-letter record.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">AI, used responsibly</div>
+    <h2>"2 eggs and toast" → structured, confirmable entries</h2>
+    <div class="grid cols-2">
+      <div class="card"><h3>Boundaries</h3><ul>
+        <li>LLM (Groq · Llama 3.3 70B) extracts <i>structure only</i> — items resolve through the same search as manual queries</li>
+        <li>User confirms every item; AI never writes to the diary</li>
+        <li>Timeout/outage → graceful <code>degraded</code> fallback to manual search</li>
+        <li>Per-user rate limits + privacy toggle; no health claims</li></ul></div>
+      <div class="card"><h3>Verified live</h3><p>"a slice of whole wheat toast" → the model normalizes <i>toast → bread</i>, matched with HIGH confidence — better recall than the deterministic parser, with the same safety rails. App remains fully functional with AI disabled.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Evidence</div>
+    <h2>Numbers, not adjectives</h2>
+    <div class="grid cols-3">
+      <div class="card"><div class="num">73</div><p>automated tests — 54 Vitest (engine, outbox, conflict lifecycle) + 19 pytest (idempotency, authz, sync, vectors)</p></div>
+      <div class="card"><div class="num">1</div><p>row in Postgres after pushing the same sync batch twice — idempotency proven at the DB, not claimed</p></div>
+      <div class="card"><div class="num">0</div><p>entries lost across offline logging, forced failures, replays, and two-device conflict drills</p></div>
+    </div>
+    <p class="muted">Failure drills are built into the product: a dev "chaos toolbar" forces offline, injects latency/5xx, kills the AI provider, and stages device conflicts.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Thanks</div>
+    <h1>Rep<span class="accent">Lift</span></h1>
+    <p class="muted" style="font-size:1.1rem">github.com/madityasaxena · demo: <code>docker compose up</code> → <code>demo@replift.app / demo1234</code></p>
+    <div class="flow">
+      <span class="step">Offline-first sync</span><span class="step">Explainable search</span><span class="step">Deterministic nutrition</span><span class="step">Observable jobs</span><span class="step">Guardrailed AI</span>
+    </div>
+  </section>
+
+</div>
+<div class="footer">
+  <span>RepLift — engineering deep dive</span>
+  <div class="dots" id="dots"></div>
+  <span>navigate: <kbd>←</kbd> <kbd>→</kbd> or click</span>
+</div>
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const dots=document.getElementById('dots');
+  slides.forEach((_,i)=>{const d=document.createElement('div');d.className='dot'+(i===0?' on':'');d.onclick=()=>go(i);dots.appendChild(d)});
+  let cur=0;
+  function go(n){
+    if(n<0||n>=slides.length)return;
+    slides[cur].classList.remove('active');dots.children[cur].classList.remove('on');
+    cur=n;slides[cur].classList.add('active');dots.children[cur].classList.add('on');
+  }
+  addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')go(cur+1);if(e.key==='ArrowLeft')go(cur-1)});
+  addEventListener('click',e=>{if(!e.target.closest('.dot'))go(cur+1)});
+</script>
+</body>
+</html>

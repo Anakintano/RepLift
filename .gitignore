@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+
+# Builds
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# Runtime artifacts
+backend/exports/
+
+# Env & secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Test & coverage
+coverage/
+.pytest_cache/
+playwright-report/
+test-results/
+.hypothesis/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Personal notes (kept local)
+REPLIFT_INTERVIEW_DEFENCE_GUIDE.md
