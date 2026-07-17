@@ -4,7 +4,9 @@ import { cn } from "@/lib/utils";
 
 // next/image doesn't auto-prepend basePath onto `src` (see basePath docs) — do it ourselves
 // so the static-export GitHub Pages build (basePath: "/RepLift") resolves the asset correctly.
-const BASE_PATH = process.env.STATIC_EXPORT === "1" ? "/RepLift" : "";
+// Must be NEXT_PUBLIC_-prefixed: this component is bundled into client code (imported by the
+// "use client" app shell), and only NEXT_PUBLIC_ vars are inlined into the client bundle.
+const BASE_PATH = process.env.NEXT_PUBLIC_STATIC_EXPORT === "1" ? "/RepLift" : "";
 
 /** Brand lockup. The PNG mark is white-on-black; we mask it into a rounded tile. */
 export function Logo({ size = 32, withWordmark = true, href = "/", className }: { size?: number; withWordmark?: boolean; href?: string | null; className?: string }) {

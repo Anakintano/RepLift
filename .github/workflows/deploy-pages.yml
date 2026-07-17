@@ -37,6 +37,7 @@ jobs:
         working-directory: frontend
         env:
           STATIC_EXPORT: "1"
+          NEXT_PUBLIC_STATIC_EXPORT: "1"
       - run: touch frontend/out/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
