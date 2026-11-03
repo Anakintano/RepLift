@@ -1,2 +1,2 @@
-// Intentional TypeScript mismatch for the CI Failure Explainer demo.
-export const ciExplainerDemo: number = true;
+// Valid assignment for the CI Failure Explainer recovery demo.
+export const ciExplainerDemo: number = 1;
